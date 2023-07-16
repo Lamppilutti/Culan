@@ -1,0 +1,12 @@
+;;; -*- mode: emacs-lisp; lexical-binding: t; -*-
+
+
+
+(define-package 'culan "0"
+  :description  "Abstract object managment system."
+  :dependencies '((emacs "29"))
+
+  :license "GNU GPL 3.0"
+  :authors '(("Lämppi Lütti" "lamppilutti@gmail.com"))
+
+  :src '("src/"))
