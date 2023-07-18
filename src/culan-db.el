@@ -60,7 +60,7 @@
     (sqlite-execute connection query)
     connection))
 
-(defun cdb-put (db objects)
+(defun cdb-set (db objects)
   (let* ((query (format "INSERT OR REPLACE INTO objects(id, data) VALUES %s;"
                         (cdb--repeat-concat "(?, ?)" (length objects) ","))))
     (sqlite-execute db query (flatten-list objects))
