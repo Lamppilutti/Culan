@@ -1,4 +1,4 @@
-;;; culan-db.el --- Čulan database operations. -*- lexical-binding: t; -*-
+;;; culan-api.el --- Čulan public operations over objects. -*- lexical-binding: t; -*-
 
 ;; This file is not part of GNU Emacs.
 
@@ -20,7 +20,6 @@
 ;; along with Čulan.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-;; This file is private API.
 
 ;;; Code:
 
@@ -30,11 +29,11 @@
 
 
 
-(defconst cdb--db-file-name "db.sqlite3")
+(defconst capi--db-file-name "db.sqlite3")
 
 
 
-(defun cdb--read-objects (stmt)
+(defun capi--read-objects (stmt)
   (let* ((result nil))
     (while (sqlite-more-p stmt)
       (let* ((row  (sqlite-next stmt))
@@ -44,7 +43,7 @@
     (sqlite-finalize stmt)
     result))
 
-(defun cdb--repeat-concat (pattern times separator)
+(defun capi--repeat-concat (pattern times separator)
   (let* ((result pattern))
     (dotimes (_ (1- times))
       (setq result (concat result separator pattern)))
@@ -52,40 +51,40 @@
 
 
 
-(defun cdb-get-db (directory)
+(defun capi-get-db (directory)
   (let* ((query      "CREATE TABLE IF NOT EXISTS objects
                       (id TEXT UNIQUE NOT NULL, data TEXT NOT NULL);")
-         (db-file    (expand-file-name cdb--db-file-name directory))
+         (db-file    (expand-file-name capi--db-file-name directory))
          (connection (sqlite-open db-file)))
     (sqlite-execute connection query)
     connection))
 
-(defun cdb-set (db objects)
+(defun capi-set (db objects)
   (let* ((query (format "INSERT OR REPLACE INTO objects(id, data) VALUES %s;"
-                        (cdb--repeat-concat "(?, ?)" (length objects) ","))))
+                        (capi--repeat-concat "(?, ?)" (length objects) ","))))
     (sqlite-execute db query (flatten-list objects))
     objects))
 
-(defun cdb-get (db ids)
+(defun capi-get (db ids)
   (let* ((query (format "SELECT id, data FROM objects WHERE id IN (%s);"
-                        (cdb--repeat-concat "?" (length ids) ","))))
-    (cdb--read-objects (sqlite-select db query ids 'set))))
+                        (capi--repeat-concat "?" (length ids) ","))))
+    (capi--read-objects (sqlite-select db query ids 'set))))
 
-(defun cdb-get-all (db ids)
+(defun capi-get-all (db)
   (let* ((query "SELECT id, data FROM objects;"))
-    (cdb--read-objects (sqlite-select db query ids 'set))))
+    (capi--read-objects (sqlite-select db query nil 'set))))
 
-(defun cdb-delete (db ids)
+(defun capi-delete (db ids)
   (let* ((query (format "DELETE FROM objects WHERE id IN (%s);"
-                        (cdb--repeat-concat "?" (seq-length ids) ","))))
+                        (capi--repeat-concat "?" (seq-length ids) ","))))
     (sqlite-execute db query ids)))
 
 
 
-(provide 'culan-db)
+(provide 'culan-api)
 
 ;; Local Variables:
-;; read-symbol-shorthands: (("cdb-" . "culan-db-"))
+;; read-symbol-shorthands: (("capi-" . "culan-api-"))
 ;; End:
 
-;;; culan-db.el ends here.
+;;; culan-api.el ends here.
