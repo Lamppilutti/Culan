@@ -29,6 +29,10 @@
 
 
 
+(defconst capi--flag-file-name ".culan")
+
+(defconst capi--db-directory "database")
+
 (defconst capi--db-file-name "db.sqlite3")
 
 
@@ -50,6 +54,14 @@
     result))
 
 
+
+(defun capi-init-directory (directory &optional force)
+  (when (or force
+            (not (file-exists-p directory))
+            (and (file-directory-p directory)
+                 (directory-empty-p directory)))
+    (make-directory directory t)
+    (make-empty-file capi--flag-file-name)))
 
 (defun capi-get-db (directory)
   (let* ((query      "CREATE TABLE IF NOT EXISTS objects
