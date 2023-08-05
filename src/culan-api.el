@@ -63,6 +63,10 @@
     (make-directory directory t)
     (make-empty-file capi--flag-file-name)))
 
+(defun capi-acceptable-directory-p (directory)
+  (or (file-exists-p (file-name-concat directory capi--flag-file-name))
+      (not (file-exists-p directory))))
+
 (defun capi-get-db (directory)
   (let* ((query      "CREATE TABLE IF NOT EXISTS objects
                       (id TEXT UNIQUE NOT NULL, data TEXT NOT NULL);")
