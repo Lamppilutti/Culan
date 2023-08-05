@@ -53,6 +53,11 @@
       (setq result (concat result separator pattern)))
     result))
 
+(defun capi--init-db (connection)
+  (let* ((query "CREATE TABLE IF NOT EXISTS objects
+                 (id TEXT UNIQUE NOT NULL, data TEXT NOT NULL);"))
+    (sqlite-execute connection query)))
+
 
 
 (defun capi-init-directory (directory &optional force)
@@ -68,32 +73,32 @@
       (not (file-exists-p directory))))
 
 (defun capi-get-db (directory)
-  (let* ((query      "CREATE TABLE IF NOT EXISTS objects
-                      (id TEXT UNIQUE NOT NULL, data TEXT NOT NULL);")
-         (db-file    (expand-file-name capi--db-file-name directory))
+  (let* ((db-file    (file-name-concat directory
+                                       capi--db-directory
+                                       capi--db-file-name))
          (connection (sqlite-open db-file)))
-    (sqlite-execute connection query)
+    (capi--init-db connection)
     connection))
 
-(defun capi-set (db objects)
+(defun capi-set (connection objects)
   (let* ((query (format "INSERT OR REPLACE INTO objects(id, data) VALUES %s;"
                         (capi--repeat-concat "(?, ?)" (length objects) ","))))
-    (sqlite-execute db query (flatten-list objects))
+    (sqlite-execute connection query (flatten-list objects))
     objects))
 
-(defun capi-get (db ids)
+(defun capi-get (connection ids)
   (let* ((query (format "SELECT id, data FROM objects WHERE id IN (%s);"
                         (capi--repeat-concat "?" (length ids) ","))))
-    (capi--read-objects (sqlite-select db query ids 'set))))
+    (capi--read-objects (sqlite-select connection query ids 'set))))
 
-(defun capi-get-all (db)
+(defun capi-get-all (connection)
   (let* ((query "SELECT id, data FROM objects;"))
-    (capi--read-objects (sqlite-select db query nil 'set))))
+    (capi--read-objects (sqlite-select connection query nil 'set))))
 
-(defun capi-delete (db ids)
+(defun capi-delete (connection ids)
   (let* ((query (format "DELETE FROM objects WHERE id IN (%s);"
                         (capi--repeat-concat "?" (seq-length ids) ","))))
-    (sqlite-execute db query ids)))
+    (sqlite-execute connection query ids)))
 
 
 
