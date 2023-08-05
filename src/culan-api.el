@@ -95,6 +95,9 @@
   (let* ((query "SELECT id, data FROM objects;"))
     (capi--read-objects (sqlite-select connection query nil 'set))))
 
+(defun capi-native-search (connection query)
+  (capi--read-objects (sqlite-select connection query nil 'set)))
+
 (defun capi-delete (connection ids)
   (let* ((query (format "DELETE FROM objects WHERE id IN (%s);"
                         (capi--repeat-concat "?" (seq-length ids) ","))))
