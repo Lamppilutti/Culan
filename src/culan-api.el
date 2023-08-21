@@ -1,4 +1,4 @@
-;;; culan-api.el --- Čulan public operations over objects. -*- lexical-binding: t; -*-
+;;; culan-api.el --- -*- lexical-binding: t; -*-
 
 ;; This file is not part of GNU Emacs.
 
@@ -20,10 +20,14 @@
 ;; along with Čulan.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+;; Čulan public object API.
 
 ;;; Code:
 
 
+
+(eval-when-compile
+  (require 'subr-x))
 
 (require 'sqlite)
 
@@ -53,10 +57,11 @@
       (setq result (concat result separator pattern)))
     result))
 
-(defun capi--init-db (connection)
+(defun capi--initialize-db (connection)
   (let* ((query "CREATE TABLE IF NOT EXISTS objects
                  (id TEXT UNIQUE NOT NULL, data TEXT NOT NULL);"))
-    (sqlite-execute connection query)))
+    (sqlite-execute connection query)
+    connection))
 
 
 
@@ -66,19 +71,22 @@
             (and (file-directory-p directory)
                  (directory-empty-p directory)))
     (make-directory directory t)
-    (make-empty-file capi--flag-file-name)))
+    (make-empty-file capi--flag-file-name)
+    (thread-last
+      (file-name-concat directory capi--db-directory capi--db-file-name)
+      (sqlite-open)
+      (capi--initialize-db)
+      (sqlite-close))))
 
 (defun capi-acceptable-directory-p (directory)
   (or (file-exists-p (file-name-concat directory capi--flag-file-name))
       (not (file-exists-p directory))))
 
-(defun capi-get-db (directory)
-  (let* ((db-file    (file-name-concat directory
-                                       capi--db-directory
-                                       capi--db-file-name))
-         (connection (sqlite-open db-file)))
-    (capi--init-db connection)
-    connection))
+(defun capi-get-db-connection (directory)
+  (setq directory (expand-file-name directory))
+  (thread-last
+    (file-name-concat directory capi--db-directory capi--db-file-name)
+    (sqlite-open)))
 
 (defun capi-set (connection objects)
   (let* ((query (format "INSERT OR REPLACE INTO objects(id, data) VALUES %s;"
