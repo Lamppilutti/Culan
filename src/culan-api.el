@@ -65,22 +65,26 @@
 
 
 
-(defun capi-init-directory (directory &optional force)
-  (when (or force
-            (not (file-exists-p directory))
-            (and (file-directory-p directory)
-                 (directory-empty-p directory)))
-    (make-directory directory t)
-    (make-empty-file capi--flag-file-name)
-    (thread-last
-      (file-name-concat directory capi--db-directory capi--db-file-name)
-      (sqlite-open)
-      (capi--initialize-db)
-      (sqlite-close))))
+(defun capi-initialize-directory (directory)
+  (setq directory (expand-file-name directory))
+  (make-empty-file (file-name-concat directory capi--flag-file-name) t)
+  (make-directory  (file-name-concat directory capi--db-directory))
+  (thread-last
+    (file-name-concat directory capi--db-directory capi--db-file-name)
+    (sqlite-open)
+    (capi--initialize-db)
+    (sqlite-close)))
+
+(defun capi-initialized-directory-p (directory)
+  (setq directory (expand-file-name directory))
+  (file-exists-p (file-name-concat directory capi--flag-file-name)))
 
 (defun capi-acceptable-directory-p (directory)
-  (or (file-exists-p (file-name-concat directory capi--flag-file-name))
-      (not (file-exists-p directory))))
+  (setq directory (expand-file-name directory))
+  (or (capi-initialized-directory-p directory)
+      (not (file-exists-p directory))
+      (and (file-directory-p directory)
+           (directory-empty-p directory))))
 
 (defun capi-get-db-connection (directory)
   (setq directory (expand-file-name directory))
