@@ -84,6 +84,16 @@ integrity.  Continue?" directory))
 (defun cui--insert-header ()
   (insert (format "Current directory: %s \n" cui--directory)))
 
+(defun cui--insert-objects (objects)
+  (mapc
+   (lambda (object)
+     (let* ((begin (point)))
+       (insert (car object) "\n")
+       (thread-first
+         (make-overlay begin (point) nil t)
+         (overlay-put :id (car object)))))
+   objects))
+
 
 
 (defvar-keymap culan-mode-map
@@ -114,16 +124,13 @@ integrity.  Continue?" directory))
          (cui--init-buffer directory)))))
 
 (defun culan-ui-list-objects ()
-  (declare (interactive-only t)
-           (modes culan-mode))
+  (declare (interactive-only t) (modes culan-mode))
   (interactive)
   (let* ((inhibit-read-only t)
-         (entities (capi-get-all (capi-get-db cui--directory))))
+         (objects (capi-get-all (capi-get-db-connection cui--directory))))
     (erase-buffer)
     (cui--insert-header)
-    (mapc (lambda (object)
-            (insert (car object) "\n"))
-          entities)))
+    (cui--insert-objects objects)))
 
 
 
