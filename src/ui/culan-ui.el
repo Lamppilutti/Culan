@@ -94,12 +94,22 @@ integrity.  Continue?" directory))
          (overlay-put :id (car object)))))
    objects))
 
+(defun cui--generate-unique-object-id ()
+  (let* ((current-time-list t))
+    (format "object-%X-%X-%X-%X-(%X)"
+            (random (expt 2 32))
+            (random (expt 2 32))
+            (random (expt 2 32))
+            (random (expt 2 32))
+            (nth 3 (current-time)))))
+
 
 
 (defvar-keymap culan-mode-map
   :doc "Keymap for `culan-mode'."
   :suppress 'nodigits
-  "l" #'culan-ui-list-objects)
+  "l" #'culan-ui-list-objects
+  "n" #'culan-ui-create-object)
 
 (define-derived-mode culan-mode special-mode "Čulan"
   :docstring "Major mode for object list manipulation."
@@ -131,6 +141,16 @@ integrity.  Continue?" directory))
     (erase-buffer)
     (cui--insert-header)
     (cui--insert-objects objects)))
+
+(defun culan-ui-create-object ()
+  (declare (interactive-only t) (modes culan-mode))
+  (interactive)
+  (let* ((inhibit-read-only t)
+         (object (cons (cui--generate-unique-object-id) "{}")))
+    (end-of-buffer)
+    (capi-set (capi-get-db-connection cui--directory) (list object))
+    (cui--insert-objects (list object))
+    (forward-line -1)))
 
 
 
