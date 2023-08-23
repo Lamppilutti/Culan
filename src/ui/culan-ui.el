@@ -30,6 +30,7 @@
   (require 'keymap)
   (require 'subr-x))
 
+(require 'seq)
 (require 'uniquify)
 
 (require 'culan-api)
@@ -109,7 +110,8 @@ integrity.  Continue?" directory))
   :doc "Keymap for `culan-mode'."
   :suppress 'nodigits
   "l" #'culan-ui-list-objects
-  "n" #'culan-ui-create-object)
+  "n" #'culan-ui-create-object
+  "k" #'culan-ui-delete-object)
 
 (define-derived-mode culan-mode special-mode "Čulan"
   :docstring "Major mode for object list manipulation."
@@ -151,6 +153,17 @@ integrity.  Continue?" directory))
     (capi-set (capi-get-db-connection cui--directory) (list object))
     (cui--insert-objects (list object))
     (forward-line -1)))
+
+(defun culan-ui-delete-object ()
+  (declare (interactive-only t) (modes culan-mode))
+  (interactive)
+  (let* ((inhibit-read-only t)
+         (overlay (seq-find (lambda (overlay) (overlay-get overlay :id))
+                            (overlays-at (point)))))
+    (capi-delete (capi-get-db-connection cui--directory)
+                 (list (overlay-get overlay :id)))
+    (beginning-of-line)
+    (kill-line)))
 
 
 
