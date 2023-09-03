@@ -52,10 +52,7 @@
     result))
 
 (defun capi--repeat-concat (pattern times separator)
-  (let* ((result pattern))
-    (dotimes (_ (1- times))
-      (setq result (concat result separator pattern)))
-    result))
+  (string-join (make-list times pattern) separator))
 
 (defun capi--initialize-db (connection)
   (let* ((query "CREATE TABLE IF NOT EXISTS objects
