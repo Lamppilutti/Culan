@@ -60,6 +60,12 @@
     (sqlite-execute connection query)
     connection))
 
+(defun capi--get-db-connection (directory)
+  (setq directory (expand-file-name directory))
+  (thread-last
+    (file-name-concat directory capi--db-directory capi--db-file-name)
+    (sqlite-open)))
+
 
 
 (defun capi-initialize-directory (directory)
@@ -83,33 +89,32 @@
       (and (file-directory-p directory)
            (directory-empty-p directory))))
 
-(defun capi-get-db-connection (directory)
-  (setq directory (expand-file-name directory))
-  (thread-last
-    (file-name-concat directory capi--db-directory capi--db-file-name)
-    (sqlite-open)))
-
-(defun capi-set (connection objects)
+(defun capi-set (directory objects)
   (let* ((query (format "INSERT OR REPLACE INTO objects(id, data) VALUES %s;"
-                        (capi--repeat-concat "(?, ?)" (length objects) ","))))
+                        (capi--repeat-concat "(?, ?)" (length objects) ",")))
+         (connection (capi--get-db-connection directory)))
     (sqlite-execute connection query (flatten-list objects))
     objects))
 
-(defun capi-get (connection ids)
+(defun capi-get (directory ids)
   (let* ((query (format "SELECT id, data FROM objects WHERE id IN (%s);"
-                        (capi--repeat-concat "?" (length ids) ","))))
+                        (capi--repeat-concat "?" (length ids) ",")))
+         (connection (capi--get-db-connection directory)))
     (capi--read-objects (sqlite-select connection query ids 'set))))
 
-(defun capi-get-all (connection)
-  (let* ((query "SELECT id, data FROM objects;"))
+(defun capi-get-all (directory)
+  (let* ((query "SELECT id, data FROM objects;")
+         (connection (capi--get-db-connection directory)))
     (capi--read-objects (sqlite-select connection query nil 'set))))
 
-(defun capi-native-search (connection query)
-  (capi--read-objects (sqlite-select connection query nil 'set)))
+(defun capi-native-search (directory query)
+  (let* ((connection (capi--get-db-connection directory)))
+    (capi--read-objects (sqlite-select connection query nil 'set))))
 
-(defun capi-delete (connection ids)
+(defun capi-delete (directory ids)
   (let* ((query (format "DELETE FROM objects WHERE id IN (%s);"
-                        (capi--repeat-concat "?" (seq-length ids) ","))))
+                        (capi--repeat-concat "?" (seq-length ids) ",")))
+         (connection (capi--get-db-connection directory)))
     (sqlite-execute connection query ids)))
 
 
