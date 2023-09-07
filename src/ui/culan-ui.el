@@ -30,6 +30,7 @@
   (require 'keymap)
   (require 'subr-x))
 
+(require 'derived)
 (require 'seq)
 (require 'uniquify)
 
@@ -88,11 +89,12 @@ integrity.  Continue?" directory))
 (defun cui--insert-objects (objects)
   (mapc
    (lambda (object)
-     (let* ((begin (point)))
+     (let* ((begin   (point))
+            (overlay nil))
        (insert (car object) "\n")
-       (thread-first
-         (make-overlay begin (point) nil t)
-         (overlay-put :id (car object)))))
+       (setq overlay (make-overlay begin (point) nil t))
+       (overlay-put overlay :culan-object t)
+       (overlay-put overlay :object-id (car object))))
    objects))
 
 (defun cui--generate-unique-object-id ()
@@ -158,9 +160,8 @@ integrity.  Continue?" directory))
   (declare (interactive-only t) (modes culan-mode))
   (interactive)
   (let* ((inhibit-read-only t)
-         (overlay (seq-find (lambda (overlay) (overlay-get overlay :id))
-                            (overlays-at (point)))))
-    (capi-delete cui--directory (list (overlay-get overlay :id)))
+         (overlay (cui--get-overlay (point))))
+    (capi-delete cui--directory (list (overlay-get overlay :object-id)))
     (beginning-of-line)
     (kill-line)))
 
