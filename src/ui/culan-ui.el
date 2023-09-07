@@ -35,6 +35,7 @@
 (require 'uniquify)
 
 (require 'culan-api)
+(require 'culan-editor)
 (require 'culan-custom)
 
 
@@ -97,6 +98,10 @@ integrity.  Continue?" directory))
        (overlay-put overlay :object-id (car object))))
    objects))
 
+(defun cui--get-overlay (position)
+  (seq-find (lambda (overlay) (overlay-get overlay :culan-object))
+            (overlays-at position)))
+
 (defun cui--generate-unique-object-id ()
   (let* ((current-time-list t))
     (format "object-%X-%X-%X-%X-(%X)"
@@ -111,6 +116,7 @@ integrity.  Continue?" directory))
 (defvar-keymap culan-mode-map
   :doc "Keymap for `culan-mode'."
   :suppress 'nodigits
+  "e" #'culan-ui-open-in-editor
   "l" #'culan-ui-list-objects
   "n" #'culan-ui-create-object
   "k" #'culan-ui-delete-object)
@@ -136,6 +142,12 @@ integrity.  Continue?" directory))
     (pop-to-buffer
      (or (cui--find-buffer directory)
          (cui--init-buffer directory)))))
+
+(defun culan-ui-open-in-editor ()
+  (declare (interactive-only t) (modes culan-mode))
+  (interactive)
+  (let* ((overlay (cui--get-overlay (point))))
+    (ce-open-in-editor cui--directory (overlay-get overlay :object-id))))
 
 (defun culan-ui-list-objects ()
   (declare (interactive-only t) (modes culan-mode))
@@ -171,6 +183,7 @@ integrity.  Continue?" directory))
 
 ;; Local Variables:
 ;; read-symbol-shorthands: (("cui-"  . "culan-ui-")
+;;                          ("ce-"   . "culan-editor-")
 ;;                          ("capi-" . "culan-api-"))
 ;; End:
 
