@@ -75,7 +75,9 @@
         (culan-editor-mode)
         (setq-local ce--directory directory
                     ce--object-id object-id)
-        (pp-emacs-lisp-code (ce--json->plist (cdr object)))
+        (if-let* ((plist (ce--json->plist (cdr object))))
+            (pp-emacs-lisp-code plist)
+          (insert "()"))
         (set-buffer-modified-p nil)
         (setq buffer (current-buffer))))
     (pop-to-buffer buffer)))
